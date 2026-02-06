@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { lekkaAPI } from '../../api/api';
 import './Lekka.css';
 
 function ConfirmLekka() {
   const { linkId } = useParams();
+
   const [lekka, setLekka] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -12,11 +13,8 @@ function ConfirmLekka() {
   const [error, setError] = useState('');
   const [name, setName] = useState('');
 
-  useEffect(() => {
-    fetchLekkaByLink();
-  }, [linkId]);
-
-  const fetchLekkaByLink = async () => {
+  // ✅ Wrapped in useCallback
+  const fetchLekkaByLink = useCallback(async () => {
     try {
       const response = await lekkaAPI.confirmLekka(linkId, { action: 'view' });
       setLekka(response.data);
@@ -25,7 +23,12 @@ function ConfirmLekka() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [linkId]);
+
+  // ✅ Proper dependency
+  useEffect(() => {
+    fetchLekkaByLink();
+  }, [fetchLekkaByLink]);
 
   const handleConfirm = async (e) => {
     e.preventDefault();
@@ -33,7 +36,7 @@ function ConfirmLekka() {
     setError('');
 
     try {
-      await lekkaAPI.confirmLekka(linkId, { 
+      await lekkaAPI.confirmLekka(linkId, {
         action: 'confirm',
         name: name || lekka.friendName
       });
@@ -49,7 +52,7 @@ function ConfirmLekka() {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 0,
+      minimumFractionDigits: 0
     }).format(amount);
   };
 
@@ -140,18 +143,22 @@ function ConfirmLekka() {
               {lekka.type === 'lent' ? 'You owe' : 'You are owed by'} {lekka.creatorName}
             </p>
           </div>
+
           {lekka.description && (
-            <div style={{ 
-              padding: '12px', 
-              background: 'var(--secondary-color)', 
-              borderRadius: '8px',
-              marginTop: '16px'
-            }}>
+            <div
+              style={{
+                padding: '12px',
+                background: 'var(--secondary-color)',
+                borderRadius: '8px',
+                marginTop: '16px'
+              }}
+            >
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
                 <strong>For:</strong> {lekka.description}
               </p>
             </div>
           )}
+
           {lekka.dueDate && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '12px' }}>
               Due by: {new Date(lekka.dueDate).toLocaleDateString('en-IN')}
@@ -177,8 +184,8 @@ function ConfirmLekka() {
             </small>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary btn-block"
             disabled={confirming}
           >

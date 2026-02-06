@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { lekkaAPI, friendAPI } from '../../api/api';
 import './Lekka.css';
@@ -13,11 +13,13 @@ function CreateLekka({ user }) {
     description: '',
     dueDate: '',
   });
+
   const [friends, setFriends] = useState([]);
   const [isNewFriend, setIsNewFriend] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,16 +37,18 @@ function CreateLekka({ user }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData({
       ...formData,
       [name]: value,
     });
+
     setError('');
   };
 
   const handleFriendSelect = (e) => {
     const friendId = e.target.value;
-    
+
     if (friendId === 'new') {
       setIsNewFriend(true);
       setFormData({
@@ -55,7 +59,10 @@ function CreateLekka({ user }) {
       });
     } else {
       setIsNewFriend(false);
-      const selectedFriend = friends.find(f => f.id === parseInt(friendId));
+      const selectedFriend = friends.find(
+        (f) => f.id === parseInt(friendId)
+      );
+
       setFormData({
         ...formData,
         friendId: friendId,
@@ -88,9 +95,13 @@ function CreateLekka({ user }) {
         dueDate: formData.dueDate || null,
       };
 
-      const response = await lekkaAPI.createLekka(lekkaData);
-      setSuccess('Lekka created successfully! Confirmation link sent to your friend.');
-      
+      // ✅ Removed unused "response"
+      await lekkaAPI.createLekka(lekkaData);
+
+      setSuccess(
+        'Lekka created successfully! Confirmation link sent to your friend.'
+      );
+
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
@@ -117,17 +128,21 @@ function CreateLekka({ user }) {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Select Friend</label>
-                <select 
+                <select
                   className="form-control"
                   onChange={handleFriendSelect}
                   defaultValue=""
                 >
-                  <option value="" disabled>Choose a friend</option>
-                  {friends.map(friend => (
+                  <option value="" disabled>
+                    Choose a friend
+                  </option>
+
+                  {friends.map((friend) => (
                     <option key={friend.id} value={friend.id}>
                       {friend.name}
                     </option>
                   ))}
+
                   <option value="new">+ Add New Friend</option>
                 </select>
               </div>
@@ -169,8 +184,12 @@ function CreateLekka({ user }) {
                 <div className="type-selector">
                   <button
                     type="button"
-                    className={`type-btn ${formData.type === 'lent' ? 'active' : ''}`}
-                    onClick={() => setFormData({ ...formData, type: 'lent' })}
+                    className={`type-btn ${
+                      formData.type === 'lent' ? 'active' : ''
+                    }`}
+                    onClick={() =>
+                      setFormData({ ...formData, type: 'lent' })
+                    }
                   >
                     <span className="type-icon positive">+</span>
                     <div>
@@ -178,10 +197,15 @@ function CreateLekka({ user }) {
                       <p>They owe you</p>
                     </div>
                   </button>
+
                   <button
                     type="button"
-                    className={`type-btn ${formData.type === 'borrowed' ? 'active' : ''}`}
-                    onClick={() => setFormData({ ...formData, type: 'borrowed' })}
+                    className={`type-btn ${
+                      formData.type === 'borrowed' ? 'active' : ''
+                    }`}
+                    onClick={() =>
+                      setFormData({ ...formData, type: 'borrowed' })
+                    }
                   >
                     <span className="type-icon negative">-</span>
                     <div>
@@ -235,15 +259,16 @@ function CreateLekka({ user }) {
               </div>
 
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => navigate('/dashboard')}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={loading}
                 >
@@ -261,8 +286,12 @@ function CreateLekka({ user }) {
               <li>✅ They tap to confirm (no app needed)</li>
               <li>🔔 We handle the reminders</li>
             </ul>
+
             <div className="quote">
-              <p>"The Strategy: You don't ask for money back. You just blame the app."</p>
+              <p>
+                "The Strategy: You don't ask for money back. You just blame the
+                app."
+              </p>
             </div>
           </div>
         </div>
