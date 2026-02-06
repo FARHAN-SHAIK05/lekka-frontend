@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { lekkaAPI } from '../../api/api';
 import './Lekka.css';
 
 function LekkaDetails({ user }) {
+
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [lekka, setLekka] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [proofFile, setProofFile] = useState(null);
 
-  useEffect(() => {
-    fetchLekkaDetails();
-  }, [id]);
-
-  const fetchLekkaDetails = async () => {
+  // ✅ FIXED
+  const fetchLekkaDetails = useCallback(async () => {
     try {
       const response = await lekkaAPI.getLekkaById(id);
       setLekka(response.data);
@@ -26,7 +25,12 @@ function LekkaDetails({ user }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // ✅ FIXED
+  useEffect(() => {
+    fetchLekkaDetails();
+  }, [fetchLekkaDetails]);
 
   const handleSendReminder = async () => {
     try {
@@ -52,6 +56,7 @@ function LekkaDetails({ user }) {
 
   const handleProofUpload = async (e) => {
     e.preventDefault();
+
     if (!proofFile) return;
 
     const formData = new FormData();
@@ -108,8 +113,13 @@ function LekkaDetails({ user }) {
   if (error || !lekka) {
     return (
       <div className="container">
-        <div className="alert alert-error">{error || 'Lekka not found'}</div>
-        <Link to="/dashboard" className="btn btn-primary">Go to Dashboard</Link>
+        <div className="alert alert-error">
+          {error || 'Lekka not found'}
+        </div>
+
+        <Link to="/dashboard" className="btn btn-primary">
+          Go to Dashboard
+        </Link>
       </div>
     );
   }
@@ -119,6 +129,7 @@ function LekkaDetails({ user }) {
   return (
     <div className="lekka-details">
       <div className="container">
+
         <div className="lekka-header fade-in">
           <Link to="/dashboard" className="back-btn">
             ← Back to Dashboard
@@ -126,17 +137,20 @@ function LekkaDetails({ user }) {
         </div>
 
         <div className="lekka-main-card card fade-in">
+
           <div className="lekka-amount-display">
             <h2 className={lekka.type === 'lent' ? 'positive' : 'negative'}>
               {lekka.type === 'lent' ? '+' : '-'}
               {formatAmount(lekka.amount)}
             </h2>
+
             <span className={`badge ${statusBadge.class}`}>
               {statusBadge.text}
             </span>
           </div>
 
           <div className="lekka-details-grid">
+
             <div className="detail-item">
               <span className="detail-label">Friend</span>
               <span className="detail-value">{lekka.friendName}</span>
@@ -152,11 +166,7 @@ function LekkaDetails({ user }) {
             <div className="detail-item">
               <span className="detail-label">Created</span>
               <span className="detail-value">
-                {new Date(lekka.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {new Date(lekka.createdAt).toLocaleDateString('en-IN')}
               </span>
             </div>
 
@@ -164,11 +174,7 @@ function LekkaDetails({ user }) {
               <div className="detail-item">
                 <span className="detail-label">Due Date</span>
                 <span className="detail-value">
-                  {new Date(lekka.dueDate).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {new Date(lekka.dueDate).toLocaleDateString('en-IN')}
                 </span>
               </div>
             )}
@@ -180,29 +186,29 @@ function LekkaDetails({ user }) {
               </div>
             )}
 
-            {lekka.confirmationLink && lekka.status === 'pending' && (
-              <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
-                <span className="detail-label">Confirmation Link</span>
-                <span className="detail-value" style={{ wordBreak: 'break-all' }}>
-                  {window.location.origin}/confirm/{lekka.confirmationLink}
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="action-buttons">
+
             {lekka.status === 'pending' && (
               <button className="btn btn-primary" onClick={handleSendReminder}>
                 🔔 Send Reminder
               </button>
             )}
-            
+
             {lekka.status === 'confirmed' && (
               <>
-                <button className="btn btn-primary" onClick={() => setShowProofUpload(!showProofUpload)}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowProofUpload(!showProofUpload)}
+                >
                   📸 Upload Proof
                 </button>
-                <button className="btn btn-primary" onClick={handleMarkSettled}>
+
+                <button
+                  className="btn btn-primary"
+                  onClick={handleMarkSettled}
+                >
                   ✓ Mark as Settled
                 </button>
               </>
@@ -211,6 +217,7 @@ function LekkaDetails({ user }) {
             <button className="btn btn-danger" onClick={handleDelete}>
               🗑️ Delete
             </button>
+
           </div>
 
           {showProofUpload && (
@@ -226,31 +233,15 @@ function LekkaDetails({ user }) {
                     required
                   />
                 </div>
+
                 <button type="submit" className="btn btn-primary">
                   Upload
                 </button>
               </form>
             </div>
           )}
-        </div>
 
-        {lekka.timeline && lekka.timeline.length > 0 && (
-          <div className="timeline card fade-in">
-            <h3>Activity Timeline</h3>
-            {lekka.timeline.map((item, index) => (
-              <div key={index} className="timeline-item">
-                <div className="timeline-icon">{item.icon}</div>
-                <div className="timeline-content">
-                  <h4>{item.action}</h4>
-                  <p>{item.description}</p>
-                  <span className="timeline-date">
-                    {new Date(item.timestamp).toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

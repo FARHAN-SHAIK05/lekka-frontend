@@ -1,15 +1,16 @@
- import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { lekkaAPI, friendAPI } from '../../api/api';
 import './Lekka.css';
 
 function CreateLekka({ user }) {
+
   const [formData, setFormData] = useState({
     friendId: '',
     friendName: '',
     friendPhone: '',
     amount: '',
-    type: 'lent', // lent or borrowed
+    type: 'lent',
     description: '',
     dueDate: '',
   });
@@ -22,18 +23,20 @@ function CreateLekka({ user }) {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchFriends();
-  }, []);
-
-  const fetchFriends = async () => {
+  // ✅ Wrapped in useCallback
+  const fetchFriends = useCallback(async () => {
     try {
       const response = await friendAPI.getAllFriends();
       setFriends(response.data);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
-  };
+  }, []);
+
+  // ✅ Proper dependency
+  useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -95,7 +98,6 @@ function CreateLekka({ user }) {
         dueDate: formData.dueDate || null,
       };
 
-      // ✅ Removed unused "response"
       await lekkaAPI.createLekka(lekkaData);
 
       setSuccess(
@@ -105,6 +107,7 @@ function CreateLekka({ user }) {
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
+
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create Lekka');
     } finally {
@@ -115,17 +118,20 @@ function CreateLekka({ user }) {
   return (
     <div className="create-lekka">
       <div className="container">
+
         <div className="create-header fade-in">
           <h1>⚡ Drop a Lekka</h1>
           <p>Log it in 5 seconds. Evidence stays local.</p>
         </div>
 
         <div className="create-form-wrapper fade-in">
+
           <div className="card">
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
             <form onSubmit={handleSubmit}>
+
               <div className="form-group">
                 <label>Select Friend</label>
                 <select
@@ -133,9 +139,7 @@ function CreateLekka({ user }) {
                   onChange={handleFriendSelect}
                   defaultValue=""
                 >
-                  <option value="" disabled>
-                    Choose a friend
-                  </option>
+                  <option value="" disabled>Choose a friend</option>
 
                   {friends.map((friend) => (
                     <option key={friend.id} value={friend.id}>
@@ -150,13 +154,11 @@ function CreateLekka({ user }) {
               {isNewFriend && (
                 <>
                   <div className="form-group">
-                    <label htmlFor="friendName">Friend's Name</label>
+                    <label>Friend's Name</label>
                     <input
                       type="text"
-                      id="friendName"
                       name="friendName"
                       className="form-control"
-                      placeholder="Rahul Sharma"
                       value={formData.friendName}
                       onChange={handleChange}
                       required
@@ -164,13 +166,11 @@ function CreateLekka({ user }) {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="friendPhone">Friend's Phone</label>
+                    <label>Friend's Phone</label>
                     <input
                       type="tel"
-                      id="friendPhone"
                       name="friendPhone"
                       className="form-control"
-                      placeholder="+91 98765 43210"
                       value={formData.friendPhone}
                       onChange={handleChange}
                       required
@@ -181,80 +181,63 @@ function CreateLekka({ user }) {
 
               <div className="form-group">
                 <label>Transaction Type</label>
+
                 <div className="type-selector">
                   <button
                     type="button"
-                    className={`type-btn ${
-                      formData.type === 'lent' ? 'active' : ''
-                    }`}
+                    className={`type-btn ${formData.type === 'lent' ? 'active' : ''}`}
                     onClick={() =>
                       setFormData({ ...formData, type: 'lent' })
                     }
                   >
                     <span className="type-icon positive">+</span>
-                    <div>
-                      <strong>I Gave</strong>
-                      <p>They owe you</p>
-                    </div>
+                    <strong>I Gave</strong>
                   </button>
 
                   <button
                     type="button"
-                    className={`type-btn ${
-                      formData.type === 'borrowed' ? 'active' : ''
-                    }`}
+                    className={`type-btn ${formData.type === 'borrowed' ? 'active' : ''}`}
                     onClick={() =>
                       setFormData({ ...formData, type: 'borrowed' })
                     }
                   >
                     <span className="type-icon negative">-</span>
-                    <div>
-                      <strong>I Took</strong>
-                      <p>You owe them</p>
-                    </div>
+                    <strong>I Took</strong>
                   </button>
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="amount">Amount (₹)</label>
+                <label>Amount (₹)</label>
                 <input
                   type="number"
-                  id="amount"
                   name="amount"
-                  className="form-control amount-input"
-                  placeholder="2000"
+                  className="form-control"
                   value={formData.amount}
                   onChange={handleChange}
-                  required
                   min="1"
-                  step="1"
+                  required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="description">Description (Optional)</label>
+                <label>Description</label>
                 <textarea
-                  id="description"
                   name="description"
                   className="form-control"
-                  placeholder="What was this for? (e.g., Dinner at cafe, Movie tickets)"
                   value={formData.description}
                   onChange={handleChange}
-                  rows="3"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="dueDate">Due Date (Optional)</label>
+                <label>Due Date</label>
                 <input
                   type="date"
-                  id="dueDate"
                   name="dueDate"
                   className="form-control"
                   value={formData.dueDate}
                   onChange={handleChange}
-                  min={new Date().toISOString().split('T')[0]}
                 />
               </div>
 
@@ -275,25 +258,10 @@ function CreateLekka({ user }) {
                   {loading ? 'Creating...' : 'Create Lekka'}
                 </button>
               </div>
+
             </form>
           </div>
 
-          <div className="info-card card">
-            <h3>💡 How it works</h3>
-            <ul>
-              <li>📝 Create the Lekka with details</li>
-              <li>🔗 We send a confirmation link to your friend</li>
-              <li>✅ They tap to confirm (no app needed)</li>
-              <li>🔔 We handle the reminders</li>
-            </ul>
-
-            <div className="quote">
-              <p>
-                "The Strategy: You don't ask for money back. You just blame the
-                app."
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
